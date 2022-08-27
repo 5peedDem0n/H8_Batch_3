@@ -5,7 +5,7 @@ com = random.choice(number)
 me = 10
 trying = 0
 while me != com:
-    me = input('Pick any number!\n')
+    me = input('Pick any number! (0~9)\n')
     me = int(me)
     if me > com:
         print("Pilihan anda terlalu besar!")
