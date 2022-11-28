@@ -1,39 +1,24 @@
 import pickle
+import numpy as np
 import pandas as pd
-from flask import Flask, request
+from flask import Flask, request, render_template
 
-app = Flask(__name__)
-
-with open('pipeline.pkl', 'rb') as f:
-    model = pickle.load(f)
-
-def predict_data(new_data, model):
-    columns = ['age', 'anaemia', 'creatinine_phosphokinase', 'diabetes',
-       'ejection_fraction', 'high_blood_pressure', 'platelets',
-       'serum_creatinine', 'serum_sodium', 'sex', 'smoking', 'time']
-    df_data = pd.DataFrame([new_data], columns=columns)
-    res = model.predict(df_data)
-    return 'Lived' if res[0] == 0 else 'Died'
+model = pickle.load(open('pipe_RF.pkl', 'rb'))
+app = Flask(__name__, static_folder='static')
 
 @app.route("/")
-def halo():
-    args = request.args
-    age = args.get('age', type=float, default=0)
-    anaemia = args.get('anaemia', type=float, default=0)
-    cpk = args.get('cpk', type=float, default=0)
-    diabetes = args.get('diabetes', type=float, default=0)
-    ef = args.get('ef', type=float, default=0)
-    hypertension = args.get('hypertension', type=float, default=0)
-    platelets = args.get('platelets', type=float, default=0)
-    serum_creatinine = args.get('serum_creatinine', type=float, default=0)
-    serum_sodium = args.get('serum_sodium', type=float, default=0)
-    sex = args.get('sex', type=float, default=0)
-    smoking = args.get('smoking', type=float, default=0)
-    time = args.get('time', type=float, default=0)
-    new_data = [age, anaemia, cpk, diabetes, ef, 
-                hypertension, platelets, serum_creatinine,
-                serum_sodium, sex, smoking, time]
-    res = predict_data(new_data, model)
-    return {'result':res}
+def home():
+    return render_template('index.html')
 
-# app.run(debug=True)
+@app.route("/predict", methods=['POST'])
+def predict():
+    float_features = [float(x) for x in request.form.values()]
+    feature = [np.array(float_features)]
+
+    prediction = model.predict(feature)
+
+    output = {0.0:'Lived', 1.0:'Died'}
+    return render_template('index.html', prediction_text='{}'.format(output[prediction[0]]))
+
+if __name__=='__main__':
+    app.run(debug=True)
